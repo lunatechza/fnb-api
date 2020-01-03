@@ -55,7 +55,7 @@ export class Scraper {
 		return detailedBalance;
 	}
 
-	public async transactions(account: Account): Promise<TransactionsResponse> {
+	public async transactions(account: Account, pending: boolean = false): Promise<TransactionsResponse> {
 		const page = await this._getLoggedInPage();
 
 		if (this._options.cache === true) {
@@ -65,8 +65,9 @@ export class Scraper {
 			}
 		}
 
-		const transactions = await scrapeTransactions(page, account);
+		const transactions = await scrapeTransactions(page, account, pending);
 		if (this._options.cache === true) {
+			// TODO: Set cache for pending transactions...
 			this._cache.setTransactions(account, transactions);
 		}
 

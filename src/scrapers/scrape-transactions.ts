@@ -6,6 +6,7 @@ import { navigateToAccount } from './navigator';
 import { Transaction } from '../models/transaction';
 import { TransactionCheque, TransactionChequeInitData } from '../models/transaction-cheque';
 import { TransactionSavings, TransactionSavingsInitData } from '../models/transaction-savings';
+import { TransactionPending } from '../models/transaction-pending';
 import { TransactionCredit } from '../models/transaction-credit';
 import { TransactionStatus } from '../models/transaction-status';
 import moment from 'moment';
@@ -98,27 +99,64 @@ const scrapeCredit = async (page: Page): Promise<TransactionCredit[]> => {
 	}));
 };
 
-export const scrapeTransactions = async (page: Page, account: Account): Promise<TransactionsResponse> => {
-	await navigateToAccount(page, account, 'Transaction');
+const scrapePending = async (page: Page): Promise<TransactionPending[]> => {
+	const rows = await page.evaluate(() => {
+		/* tslint:disable */
+
+		var data = [];
+
+		var rows = $('.tableRow');
+		for (var i = 0; i < rows.length; i++) {
+			var row = $(rows[i]);
+			var cells = row.find('.tableCell .tableCellItem');
+
+			data.push({
+				date: cells[0].innerText as any,
+				cardNumber: cells[1].innerText,
+				description: cells[2].innerText,
+				amount: cells[3].innerText as any,
+				status: 'Pending'
+			});
+		}
+
+		return data;
+		/* tslint:enable */
+	});
+
+	return rows.map((x: any) => ({
+		date: moment(x.date, 'DD MMM YYYY'),
+		cardNumber: x.cardNumber,
+		description: x.description,
+		amount: cleanNumber(x.amount),
+		status: TransactionStatus.Pending
+	}));
+}
+
+export const scrapeTransactions = async (page: Page, account: Account, pending: boolean = false): Promise<TransactionsResponse> => {
+	await navigateToAccount(page, account, 'Transaction', pending ? 'tableSwitcherButton_2' : 'tableSwitcherButton_1'); // TODO: Look for pending and successful
 
 	const accountTypeString = await page.evaluate(() => $('.dlTitle:contains("Type") + div').text().trim());
 	const accountType = getAccountType(accountTypeString);
 
 	let promise: Promise<Transaction[]>;
 
-	switch (accountType) {
-		case AccountType.Cheque:
-			promise = scrapeCheque(page);
-			break;
-		case AccountType.Credit:
-			promise = scrapeCredit(page);
-			break;
-		case AccountType.Savings:
-			promise = scrapeSavings(page);
-			break;
-		default:
-			promise = Promise.resolve([]);
-			break;
+	if (pending) {
+		promise = scrapePending(page);
+	} else {
+		switch (accountType) {
+			case AccountType.Cheque:
+				promise = scrapeCheque(page);
+				break;
+			case AccountType.Credit:
+				promise = scrapeCredit(page);
+				break;
+			case AccountType.Savings:
+				promise = scrapeSavings(page);
+				break;
+			default:
+				promise = Promise.resolve([]);
+				break;
+		}
 	}
 
 	const transactions = await promise;

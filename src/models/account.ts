@@ -42,8 +42,8 @@ export class Account<TBalance extends DetailedBalance = DetailedBalance, TTransa
 	 * Gets all transactions FNB exposes through online banking.
 	 * @see Transaction
 	 */
-	public async transactions<T extends Transaction = TTransaction>(): Promise<T[]> {
-		const data = await getScraper().transactions(this);
+	public async transactions<T extends Transaction = TTransaction>(pending: boolean = false): Promise<T[]> {
+		const data = await getScraper().transactions(this, pending);
 		return data.transactions as T[];
 	}
 

@@ -26,7 +26,7 @@ export const navigateToMyBankAccounts = async (page: Page) => {
 	await page.waitForFunction(() => $('#summary_of_account_balances').length > 0);
 };
 
-export const navigateToAccount = async (page: Page, account: Account, tab: string) => {
+export const navigateToAccount = async (page: Page, account: Account, tab: string, tableTab?: string) => {
 	await navigateToMyBankAccounts(page);
 	const accountId = await page.evaluate((acc: Account) => {
 
@@ -68,4 +68,10 @@ export const navigateToAccount = async (page: Page, account: Account, tab: strin
 
 	await page.click(`.subTabButton:nth-child(${indexOfTab + 1})`);
 	await page.waitForFunction(() => $('#loaderOverlay.Hhide').length > 0);
+
+	if (tableTab) {
+		await page.click(`#${tableTab}`);
+		await page.waitForFunction(() => $('#loaderOverlay.Hhide').length === 0);
+		await page.waitForFunction(() => $('#loaderOverlay.Hhide').length > 0);
+	}
 };
