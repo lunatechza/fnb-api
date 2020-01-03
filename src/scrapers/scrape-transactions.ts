@@ -61,11 +61,75 @@ async function scrapeChequeOrSavings<T extends TransactionChequeInitData>(page: 
 }
 
 const scrapeCheque = async (page: Page): Promise<TransactionCheque[]> => {
-	return (await scrapeChequeOrSavings<TransactionChequeInitData>(page)).map(x => new TransactionCheque(x));
+	const rows = await page.evaluate(() => {
+		/* tslint:disable */
+
+		var data = [];
+
+		var rows = $('.tableRow');
+		for (var i = 0; i < rows.length; i++) {
+			var row = $(rows[i]);
+			var cells = row.find('.tableCell .tableCellItem');
+
+			data.push({
+				date: cells[0].innerText as any,
+				description: cells[1].innerText,
+				reference: cells[2].innerText,
+				serviceFee: cells[3].innerText as any,
+				amount: cells[4].innerText as any,
+				balance: cells[5].innerText as any,
+				status: 'Successful'
+			});
+		}
+
+		return data;
+		/* tslint:enable */
+	});
+
+	return rows.map((x: any) => ({
+		date: moment(x.date, 'DD MMM YYYY'),
+		description: x.description,
+		reference: x.reference,
+		serviceFee: cleanNumber(x.serviceFee),
+		amount: cleanNumber(x.amount),
+		balance: cleanNumber(x.balance),
+		status: TransactionStatus.Successful
+	}));
 };
 
 const scrapeSavings = async (page: Page): Promise<TransactionSavings[]> => {
-	return (await scrapeChequeOrSavings<TransactionSavingsInitData>(page)).map(x => new TransactionSavings(x));
+	const rows = await page.evaluate(() => {
+		/* tslint:disable */
+
+		var data = [];
+
+		var rows = $('.tableRow');
+		for (var i = 0; i < rows.length; i++) {
+			var row = $(rows[i]);
+			var cells = row.find('.tableCell .tableCellItem');
+
+			data.push({
+				date: cells[0].innerText as any,
+				description: cells[1].innerText,
+				amount: cells[2].innerText as any,
+				balance: cells[3].innerText as any,
+				status: 'Successful'
+			});
+		}
+
+		return data;
+		/* tslint:enable */
+	});
+
+	return rows.map((x: any) => ({
+		date: moment(x.date, 'DD MMM YYYY'),
+		description: x.description,
+		amount: cleanNumber(x.amount),
+		balance: cleanNumber(x.balance),
+		status: TransactionStatus.Successful,
+		reference: undefined,
+		serviceFee: undefined
+	}));
 };
 
 const scrapeCredit = async (page: Page): Promise<TransactionCredit[]> => {
@@ -141,6 +205,9 @@ export const scrapeTransactions = async (page: Page, account: Account, pending: 
 	let promise: Promise<Transaction[]>;
 
 	if (pending) {
+		if ([AccountType.Savings, AccountType.Other].indexOf(accountType) !== -1) {
+			return {accountType, transactions: []};
+		}
 		promise = scrapePending(page);
 	} else {
 		switch (accountType) {

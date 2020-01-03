@@ -62,6 +62,8 @@ export const navigateToAccount = async (page: Page, account: Account, tab: strin
 		/* tslint:enable */
 	}, tab);
 
+
+
 	if (indexOfTab === null) {
 		throw new Error('Could not find detailed balance tab to navigate to');
 	}
@@ -69,7 +71,9 @@ export const navigateToAccount = async (page: Page, account: Account, tab: strin
 	await page.click(`.subTabButton:nth-child(${indexOfTab + 1})`);
 	await page.waitForFunction(() => $('#loaderOverlay.Hhide').length > 0);
 
-	if (tableTab) {
+	if (tableTab && await page.evaluate((text: string) => {
+		return $(`#${text}`).length > 0;
+	}, tableTab)) {
 		await page.click(`#${tableTab}`);
 		await page.waitForFunction(() => $('#loaderOverlay.Hhide').length === 0);
 		await page.waitForFunction(() => $('#loaderOverlay.Hhide').length > 0);

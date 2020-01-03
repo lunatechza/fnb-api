@@ -2,7 +2,7 @@ import { AccountLoader } from './account-loader';
 import { LaunchOptions } from 'puppeteer';
 import { Scraper, getScraper } from '../scrapers';
 
-/** 
+/**
  * Configuration options for the FNB Api.
  * @see FnbApi
  */
@@ -50,7 +50,8 @@ export class Api {
 	}
 
 	/** Frees up puppeteer resources */
-	public close() {
-		this._scraper.close();
+	public async close() {
+		await this._scraper.close();
+		delete this._scraper;
 	}
 }

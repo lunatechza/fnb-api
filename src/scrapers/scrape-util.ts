@@ -9,7 +9,7 @@ export const getAccountType = (text: string) => {
 		return AccountType.Credit;
 	}
 
-	if (text.indexOf('Savings') !== -1) {
+	if (text.indexOf('Savings') !== -1 || text.indexOf('Notice') !== -1) {
 		return AccountType.Savings;
 	}
 

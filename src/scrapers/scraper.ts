@@ -59,7 +59,7 @@ export class Scraper {
 		const page = await this._getLoggedInPage();
 
 		if (this._options.cache === true) {
-			const existing = this._cache.getTransactions(account);
+			const existing = this._cache.getTransactions(account, pending);
 			if (existing) {
 				return existing;
 			}
@@ -68,7 +68,7 @@ export class Scraper {
 		const transactions = await scrapeTransactions(page, account, pending);
 		if (this._options.cache === true) {
 			// TODO: Set cache for pending transactions...
-			this._cache.setTransactions(account, transactions);
+			this._cache.setTransactions(account, transactions, pending);
 		}
 
 		return transactions;

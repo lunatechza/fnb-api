@@ -57,11 +57,11 @@ export class Cache {
 		this._setValue(`${account.name}_detailedBalance`, detailedBalance);
 	}
 
-	public getTransactions(account: Account) {
-		return this._getValue<TransactionsResponse>(`${account.name}_transactions`);
+	public getTransactions(account: Account, pending: boolean = false) {
+		return this._getValue<TransactionsResponse>(`${account.name}_transactions${pending ? '_pending' : ''}`);
 	}
 
-	public setTransactions(account: Account, transactions: TransactionsResponse) {
-		this._setValue(`${account.name}_transactions`, transactions);
+	public setTransactions(account: Account, transactions: TransactionsResponse, pending: boolean = false) {
+		this._setValue(`${account.name}_transactions${pending ? '_pending' : ''}`, transactions);
 	}
 }
